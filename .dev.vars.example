@@ -1,0 +1,3 @@
+# Optional. Public GitHub zipballs use codeload and do not need this.
+# Required for github.com release-asset URLs that 404 without auth.
+GITHUB_TOKEN=

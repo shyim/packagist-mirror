@@ -1,0 +1,31 @@
+{
+	"name": "shyim/packagist-mirror-plugin",
+	"description": "Download Composer package zips through a Packagist mirror without changing composer.lock",
+	"type": "composer-plugin",
+	"license": "MIT",
+	"require": {
+		"php": ">=8.1",
+		"composer-plugin-api": "^2.0"
+	},
+	"require-dev": {
+		"composer/composer": "^2.2",
+		"phpunit/phpunit": "^10.5"
+	},
+	"autoload": {
+		"psr-4": {
+			"Shyim\\PackagistMirror\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Shyim\\PackagistMirror\\Tests\\": "tests/"
+		}
+	},
+	"extra": {
+		"class": "Shyim\\PackagistMirror\\Plugin",
+		"plugin-modifies-downloads": true
+	},
+	"scripts": {
+		"test": "phpunit"
+	}
+}
