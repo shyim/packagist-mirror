@@ -31,7 +31,7 @@ describe("worker routes", () => {
 		expect(body["notify-batch"]).toBe("/downloads/");
 	});
 
-	it("leaves p2 dist URLs on origin so composer.lock does not change", async () => {
+	it("rewrites p2 dist URLs and keeps source URLs", async () => {
 		mockFetch({
 			"https://repo.packagist.org/p2/monolog/monolog.json": {
 				minified: "composer/2.0",
@@ -72,7 +72,7 @@ describe("worker routes", () => {
 			"https://github.com/Seldaek/monolog.git",
 		);
 		expect(body.packages["monolog/monolog"][0].dist.url).toBe(
-			"https://api.github.com/repos/Seldaek/monolog/zipball/abc123",
+			"https://mirror.test/dist/https/api.github.com/repos/Seldaek/monolog/zipball/abc123",
 		);
 	});
 

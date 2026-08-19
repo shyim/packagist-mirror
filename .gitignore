@@ -4,5 +4,3 @@ node_modules/
 dist/
 .DS_Store
 *.log
-plugin/vendor/
-plugin/.phpunit.cache/

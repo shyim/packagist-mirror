@@ -6,33 +6,24 @@ Composer 1 is not supported. Packagist shut that protocol down in September 2025
 
 ## Use it
 
-Point Composer at the Worker for metadata, and install the plugin so zip downloads go through R2 **without rewriting `composer.lock`**:
-
 ```bash
 composer config -g repos.packagist composer https://packages.shyim.de
-composer global config allow-plugins.shyim/packagist-mirror-plugin true
-composer global require shyim/packagist-mirror-plugin
 ```
 
-The plugin hooks `PRE_FILE_DOWNLOAD` and fetches allowlisted zip URLs from `https://packages.shyim.de/dist/https/<host>/<path>`. Lock files keep the original GitHub/GitLab `dist.url`.
-
-Per-project instead of global:
+Existing `composer.lock` files still contain GitHub/GitLab zip URLs. Rewrite those locations without bumping versions:
 
 ```bash
-composer config allow-plugins.shyim/packagist-mirror-plugin true
-composer require --dev shyim/packagist-mirror-plugin
+composer update --lock
 ```
 
-Override the mirror URL with `PACKAGIST_MIRROR` or `extra.packagist-mirror.url`.
-
-Metadata still rewrites `dist.url` only if the Worker var `REWRITE_DIST_URLS` is `1` (off by default, because that *does* change lock files).
+New resolves (`composer update`, new projects) get mirrored dist URLs automatically.
 
 ## What it serves
 
 | Path | Role |
 |---|---|
 | `/packages.json` | Composer repository root, with URLs rewritten onto this Worker |
-| `/p2/<vendor>/<package>.json` | Composer 2 metadata (origin `dist.url` left intact) |
+| `/p2/<vendor>/<package>.json` | Composer 2 metadata, `dist.url` rewritten to this Worker |
 | `/dist/https/<host>/<path>` | Zip cache (R2 hit, or fetch origin + stream + store) |
 | `/downloads/` | Forwards Composer install notifications to Packagist |
 | `/search.json`, `/packages/list.json`, `/providers/*`, `/api/security-advisories/`, `/metadata/changes.json`, `/lists/all/summary.json` | Proxied Packagist APIs |
@@ -73,9 +64,10 @@ npx wrangler secret put GITHUB_TOKEN
 
 ## How zip caching works
 
-1. Composer resolves packages from `/packages.json` and `/p2/...` (lock file still stores GitHub/GitLab URLs).
-2. The Composer plugin rewrites the download to `/dist/https/<host>/<path>` at fetch time.
-3. The Worker looks up `dist/<sha256(originUrl)>` in R2.
-4. On a miss it fetches the origin zip, streams it to Composer, and `tee()`s the same stream into R2.
+1. Composer asks for `/p2/vendor/package.json`.
+2. The Worker rewrites each allowlisted `dist.url` to `https://packages.shyim.de/dist/https/<host>/<path>`.
+3. Composer writes that URL into `composer.lock` and downloads it.
+4. The Worker looks up `dist/<sha256(originUrl)>` in R2.
+5. On a miss it fetches the origin zip, streams it to Composer, and `tee()`s the same stream into R2.
 
 R2 puts are atomic. If the client aborts mid-download, the next request fetches again.

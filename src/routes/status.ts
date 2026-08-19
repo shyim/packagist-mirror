@@ -5,7 +5,7 @@ export function handleStatus(request: Request): Response {
 		name: "packagist-mirror",
 		repository: repoUrl,
 		configure: `composer config -g repos.packagist composer ${repoUrl}`,
-		plugin: "composer global require shyim/packagist-mirror-plugin",
+		lockfile: "composer update --lock",
 	};
 
 	if (request.headers.get("accept")?.includes("application/json")) {
@@ -27,10 +27,10 @@ export function handleStatus(request: Request): Response {
 </head>
 <body>
   <h1>Packagist mirror</h1>
-  <p>Point Composer at this Worker for metadata:</p>
+  <p>Point Composer at this Worker instead of packagist.org:</p>
   <pre><code>${escapeHtml(payload.configure)}</code></pre>
-  <p>Install the Composer plugin so zip downloads go through the mirror without changing <code>composer.lock</code>:</p>
-  <pre><code>${escapeHtml(payload.plugin)}</code></pre>
+  <p>Existing lock files still contain GitHub zip URLs. Rewrite them without bumping versions:</p>
+  <pre><code>${escapeHtml(payload.lockfile)}</code></pre>
 </body>
 </html>`;
 

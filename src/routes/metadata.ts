@@ -24,7 +24,6 @@ export async function handleP2Metadata(
 		return jsonNotFound(MISS_CACHE_CONTROL);
 	}
 
-	const rewriteDist = env.REWRITE_DIST_URLS === "1" || env.REWRITE_DIST_URLS === "true";
 	const isAllowed = createHostAllowlist(env.ALLOWED_DIST_HOSTS);
 	const publicOrigin = url.origin;
 	return cachedJson(request, ctx, HIT_CACHE_CONTROL, async () => {
@@ -39,10 +38,7 @@ export async function handleP2Metadata(
 		if (!data) {
 			return origin;
 		}
-		const body = rewriteDist
-			? rewriteP2Metadata(data as P2Metadata, isAllowed, publicOrigin)
-			: data;
-		return { body, origin };
+		return { body: rewriteP2Metadata(data as P2Metadata, isAllowed, publicOrigin), origin };
 	});
 }
 

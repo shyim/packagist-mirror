@@ -30,6 +30,5 @@
 		"UPSTREAM_API": "https://packagist.org",
 		"CONTACT_EMAIL": "s.sayakci@gmail.com",
 		"ALLOWED_DIST_HOSTS": "",
-		"REWRITE_DIST_URLS": "",
 	},
 }
