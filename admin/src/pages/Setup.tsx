@@ -1,8 +1,9 @@
-import { Banner, Button, Input, Label, LayerCard, Text } from "@cloudflare/kumo";
+import { Banner, Button, Input } from "@cloudflare/kumo";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { authClient } from "../auth-client";
+import { AuthScreen } from "../layout/AuthScreen";
 
 export function Setup() {
 	const navigate = useNavigate();
@@ -39,37 +40,24 @@ export function Setup() {
 	}
 
 	return (
-		<main style={{ maxWidth: 420, margin: "4rem auto", padding: "0 1rem" }}>
-			<LayerCard>
-				<div style={{ padding: "1.5rem", display: "grid", gap: "1rem" }}>
-					<Text size="xl" weight="semibold">
-						Create the first admin
-					</Text>
-					<Text tone="secondary">This wizard only runs once. There is no public signup.</Text>
-					{error ? <Banner variant="error">{error}</Banner> : null}
-					<form onSubmit={onSubmit} style={{ display: "grid", gap: "0.85rem" }}>
-						<Label>
-							Name
-							<Input name="name" required autoComplete="name" />
-						</Label>
-						<Label>
-							Email
-							<Input name="email" type="email" required autoComplete="email" />
-						</Label>
-						<Label>
-							Password
-							<Input name="password" type="password" required minLength={8} autoComplete="new-password" />
-						</Label>
-						<Label>
-							Confirm password
-							<Input name="confirm" type="password" required minLength={8} autoComplete="new-password" />
-						</Label>
-						<Button type="submit" disabled={pending}>
-							{pending ? "Creating…" : "Create admin"}
-						</Button>
-					</form>
-				</div>
-			</LayerCard>
-		</main>
+		<AuthScreen title="Create the first admin" description="This wizard only runs once. There is no public signup.">
+			{error ? <Banner variant="error">{error}</Banner> : null}
+			<form onSubmit={onSubmit}>
+				<Input name="name" label="Name" required autoComplete="name" />
+				<Input name="email" label="Email" type="email" required autoComplete="email" />
+				<Input name="password" label="Password" type="password" required minLength={8} autoComplete="new-password" />
+				<Input
+					name="confirm"
+					label="Confirm password"
+					type="password"
+					required
+					minLength={8}
+					autoComplete="new-password"
+				/>
+				<Button type="submit" variant="primary" disabled={pending} loading={pending}>
+					Create admin
+				</Button>
+			</form>
+		</AuthScreen>
 	);
 }

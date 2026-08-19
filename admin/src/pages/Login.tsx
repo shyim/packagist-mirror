@@ -1,7 +1,8 @@
-import { Banner, Button, Input, Label, LayerCard, Text } from "@cloudflare/kumo";
+import { Banner, Button, Input } from "@cloudflare/kumo";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authClient } from "../auth-client";
+import { AuthScreen } from "../layout/AuthScreen";
 
 export function Login() {
 	const navigate = useNavigate();
@@ -26,28 +27,15 @@ export function Login() {
 	}
 
 	return (
-		<main style={{ maxWidth: 420, margin: "4rem auto", padding: "0 1rem" }}>
-			<LayerCard>
-				<div style={{ padding: "1.5rem", display: "grid", gap: "1rem" }}>
-					<Text size="xl" weight="semibold">
-						Sign in
-					</Text>
-					{error ? <Banner variant="error">{error}</Banner> : null}
-					<form onSubmit={onSubmit} style={{ display: "grid", gap: "0.85rem" }}>
-						<Label>
-							Email
-							<Input name="email" type="email" required autoComplete="username" />
-						</Label>
-						<Label>
-							Password
-							<Input name="password" type="password" required autoComplete="current-password" />
-						</Label>
-						<Button type="submit" disabled={pending}>
-							{pending ? "Signing in…" : "Sign in"}
-						</Button>
-					</form>
-				</div>
-			</LayerCard>
-		</main>
+		<AuthScreen title="Sign in" description="Use the account created during first-run setup.">
+			{error ? <Banner variant="error">{error}</Banner> : null}
+			<form onSubmit={onSubmit}>
+				<Input name="email" label="Email" type="email" required autoComplete="username" />
+				<Input name="password" label="Password" type="password" required autoComplete="current-password" />
+				<Button type="submit" variant="primary" disabled={pending} loading={pending}>
+					Sign in
+				</Button>
+			</form>
+		</AuthScreen>
 	);
 }

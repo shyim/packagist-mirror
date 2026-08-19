@@ -274,13 +274,15 @@ export async function handleAdmin(
 }
 
 async function serveAdminAsset(request: Request, env: Env, url: URL): Promise<Response> {
-	const assetPath = url.pathname.replace(/^\/admin/, "") || "/";
-	const assetRequest = new Request(new URL(assetPath, url.origin), request);
-	const asset = await env.ASSETS.fetch(assetRequest);
-	if (asset.status !== 404 || !request.headers.get("accept")?.includes("text/html")) {
-		return asset;
-	}
-	return env.ASSETS.fetch(new Request(new URL("/index.html", url.origin), request));
+	const rest = url.pathname.replace(/^\/admin/, "") || "/";
+	const assetPath = rest.startsWith("/assets/") ? rest : "/";
+	const assetUrl = new URL(assetPath, url.origin);
+	return env.ASSETS.fetch(
+		new Request(assetUrl.toString(), {
+			method: "GET",
+			headers: request.headers,
+		}),
+	);
 }
 
 async function handleUpload(request: Request, env: Env): Promise<Response> {

@@ -3,8 +3,12 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { api } from "./api";
 import { authClient } from "./auth-client";
-import { Dashboard } from "./pages/Dashboard";
+import { Shell } from "./layout/Shell";
 import { Login } from "./pages/Login";
+import { Overview } from "./pages/Overview";
+import { Packages } from "./pages/Packages";
+import { Remotes } from "./pages/Remotes";
+import { Settings } from "./pages/Settings";
 import { Setup } from "./pages/Setup";
 import { Users } from "./pages/Users";
 
@@ -29,8 +33,10 @@ export function App() {
 
 	if (error) {
 		return (
-			<div style={{ maxWidth: 480, margin: "4rem auto", padding: "0 1rem" }}>
-				<Banner variant="error">{error}</Banner>
+			<div className="auth-screen">
+				<div className="auth-card">
+					<Banner variant="error">{error}</Banner>
+				</div>
 			</div>
 		);
 	}
@@ -46,32 +52,26 @@ export function App() {
 			/>
 			<Route
 				path="/login"
-				element={
-					setupNeeded ? <Navigate to="/setup" replace /> : signedIn ? <Navigate to="/" replace /> : <Login />
-				}
+				element={setupNeeded ? <Navigate to="/setup" replace /> : signedIn ? <Navigate to="/" replace /> : <Login />}
 			/>
-			<Route
-				path="/users"
-				element={
-					!signedIn ? (
-						<Navigate to={setupNeeded ? "/setup" : "/login"} replace />
-					) : role === "admin" ? (
-						<Users />
-					) : (
-						<Text>You need to be an admin to manage users.</Text>
-					)
-				}
-			/>
-			<Route
-				path="/"
-				element={
-					signedIn ? (
-						<Dashboard />
-					) : (
-						<Navigate to={setupNeeded ? "/setup" : "/login"} replace />
-					)
-				}
-			/>
+			<Route element={<Shell setupNeeded={setupNeeded} signedIn={signedIn} />}>
+				<Route path="/" element={<Overview />} />
+				<Route path="/remotes" element={<Remotes />} />
+				<Route path="/packages" element={<Packages />} />
+				<Route path="/settings" element={<Settings />} />
+				<Route
+					path="/users"
+					element={
+						role === "admin" ? (
+							<Users />
+						) : (
+							<div className="page">
+								<Text variant="secondary">You need to be an admin to manage users.</Text>
+							</div>
+						)
+					}
+				/>
+			</Route>
 			<Route path="*" element={<Navigate to="/" replace />} />
 		</Routes>
 	);
