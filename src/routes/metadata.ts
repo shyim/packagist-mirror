@@ -1,4 +1,5 @@
 import { createHostAllowlist } from "../allowlist";
+import { getSetting } from "../db";
 import { rewriteP2Metadata, type P2Metadata } from "../rewrite/metadata";
 import { cachedJson, fetchUpstreamJson } from "./upstream";
 
@@ -20,6 +21,9 @@ export async function handleP2Metadata(
 	ctx: ExecutionContext,
 ): Promise<Response> {
 	const url = new URL(request.url);
+	if ((await getSetting(env.DB, "packagist_enabled", "1")) === "0") {
+		return jsonNotFound(MISS_CACHE_CONTROL);
+	}
 	if (!isValidP2Path(url.pathname)) {
 		return jsonNotFound(MISS_CACHE_CONTROL);
 	}

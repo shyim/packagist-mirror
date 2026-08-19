@@ -1,0 +1,34 @@
+:root {
+  color-scheme: light dark;
+  --border: color-mix(in srgb, CanvasText 14%, Canvas);
+}
+* { box-sizing: border-box; }
+body {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  max-width: 56rem;
+  margin: 2rem auto;
+  padding: 0 1.25rem 4rem;
+  line-height: 1.45;
+}
+header { display: flex; justify-content: space-between; align-items: center; }
+h1, h2 { font-weight: 650; }
+section { margin: 2rem 0; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+form { display: grid; gap: 0.65rem; margin: 1rem 0; }
+label { display: grid; gap: 0.25rem; font-size: 0.92rem; }
+label.row { display: flex; align-items: center; gap: 0.5rem; }
+input, select, button {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+}
+table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.4rem 0.35rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.hint, code { font-size: 0.88rem; }
+.hint { opacity: 0.75; }
+#flash {
+  position: sticky;
+  bottom: 1rem;
+  padding: 0.7rem 0.9rem;
+  background: color-mix(in srgb, CanvasText 8%, Canvas);
+  border-radius: 0.4rem;
+}
+button.danger { color: FireBrick; }

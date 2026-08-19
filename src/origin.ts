@@ -18,9 +18,10 @@ export function normalizeOriginUrl(url: URL): URL {
 
 export function originHeaders(
 	requestUrl: URL,
-	env: { CONTACT_EMAIL: string; GITHUB_TOKEN?: string },
+	env: { CONTACT_EMAIL: string; GITHUB_TOKEN?: string; GITLAB_TOKEN?: string },
 	target: URL,
 	accept?: string,
+	extraAuth?: string,
 ): Headers {
 	const headers = new Headers({
 		"user-agent": originUserAgent(requestUrl, env.CONTACT_EMAIL),
@@ -28,20 +29,31 @@ export function originHeaders(
 	if (accept) {
 		headers.set("accept", accept);
 	}
-
-	const token = env.GITHUB_TOKEN?.trim();
-	if (token && isGitHubHost(target.hostname)) {
-		headers.set("authorization", `Bearer ${token}`);
+	if (extraAuth) {
+		headers.set("authorization", extraAuth);
+	} else {
+		const github = env.GITHUB_TOKEN?.trim();
+		if (github && isGitHubHost(target.hostname)) {
+			headers.set("authorization", `Bearer ${github}`);
+		}
+		const gitlab = env.GITLAB_TOKEN?.trim();
+		if (gitlab && isGitLabHost(target.hostname)) {
+			headers.set("authorization", `Bearer ${gitlab}`);
+		}
 	}
 
 	return headers;
 }
 
-function isGitHubHost(hostname: string): boolean {
+export function isGitHubHost(hostname: string): boolean {
 	return (
 		hostname === "api.github.com" ||
 		hostname === "github.com" ||
 		hostname === "codeload.github.com" ||
 		hostname.endsWith(".githubusercontent.com")
 	);
+}
+
+export function isGitLabHost(hostname: string): boolean {
+	return hostname === "gitlab.com" || hostname.endsWith(".gitlab.com") || hostname.includes("gitlab");
 }

@@ -1,4 +1,5 @@
 import { createHostAllowlist } from "../allowlist";
+import { extraDistHosts } from "../db";
 import { normalizeOriginUrl, originHeaders } from "../origin";
 import { parseDistRequest } from "../rewrite/dist-url";
 import { sha256Hex } from "../util/hash";
@@ -17,12 +18,28 @@ export async function handleDist(
 	}
 
 	const url = new URL(request.url);
+	const upload = url.pathname.match(/^\/dist\/upload\/(.+)\/([^/]+)\.zip$/);
+	if (upload) {
+		const name = decodeURIComponent(upload[1]);
+		const version = decodeURIComponent(upload[2]);
+		const key = `upload/${name}/${version}.zip`;
+		const object = await env.BUCKET.get(key, {
+			...(request.headers.has("range") ? { range: request.headers } : {}),
+			onlyIf: request.headers,
+		});
+		if (!object) {
+			return new Response("Not found", { status: 404 });
+		}
+		return r2Response(object, request.method, request.headers.has("range"));
+	}
+
 	const originUrl = parseDistRequest(url.pathname, url.search);
 	if (!originUrl) {
 		return new Response("Invalid dist URL", { status: 400 });
 	}
 
-	const isAllowed = createHostAllowlist(env.ALLOWED_DIST_HOSTS);
+	const extra = [...parseHosts(env.ALLOWED_DIST_HOSTS), ...(await extraDistHosts(env.DB))];
+	const isAllowed = createHostAllowlist(extra.join(","));
 	if (!isAllowed(originUrl.hostname)) {
 		return new Response("Dist host is not allowlisted", { status: 403 });
 	}
@@ -76,6 +93,13 @@ export async function handleDist(
 		}),
 	);
 	return new Response(toClient, { status: 200, headers });
+}
+
+function parseHosts(raw: string | undefined): string[] {
+	return (raw ?? "")
+		.split(",")
+		.map((host) => host.trim())
+		.filter(Boolean);
 }
 
 function r2Response(object: R2Object | R2ObjectBody, method: string, ranged: boolean): Response {

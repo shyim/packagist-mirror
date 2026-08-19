@@ -1,3 +1,11 @@
+# Required for /admin
+ADMIN_TOKEN=change-me
+
+# Used to encrypt remote/VCS tokens stored in D1 (any long random string)
+CONFIG_KEY=change-me-to-a-long-random-string
+
 # Optional. Public GitHub zipballs use codeload and do not need this.
-# Required for github.com release-asset URLs that 404 without auth.
 GITHUB_TOKEN=
+
+# Optional. For private GitLab repos and GitLab Composer remotes.
+GITLAB_TOKEN=

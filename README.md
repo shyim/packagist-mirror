@@ -1,73 +1,51 @@
 # Packagist mirror
 
-A Composer 2 repository on Cloudflare Workers. Point Composer at the Worker instead of packagist.org. Package metadata is proxied from Packagist; zipballs are rewritten onto this host and cached on the fly in R2.
+A Composer 2 repository on Cloudflare Workers. Mirror Packagist, extra Composer registries, GitHub/GitLab repos, and uploaded zips. Dist archives are cached in R2.
 
-Composer 1 is not supported. Packagist shut that protocol down in September 2025.
+Composer 1 is not supported.
 
-## Use it
-
-```bash
-composer config -g repos.packagist composer https://packages.shyim.de
-```
-
-Existing `composer.lock` files still contain GitHub/GitLab zip URLs. Rewrite those locations without bumping versions:
+## Clients
 
 ```bash
+composer config -g repos.packagist composer https://<your-host>
 composer update --lock
 ```
 
-New resolves (`composer update`, new projects) get mirrored dist URLs automatically.
-
-## What it serves
-
-| Path | Role |
+| URL | What Composer sees |
 |---|---|
-| `/packages.json` | Composer repository root, with URLs rewritten onto this Worker |
-| `/p2/<vendor>/<package>.json` | Composer 2 metadata, `dist.url` rewritten to this Worker |
-| `/dist/https/<host>/<path>` | Zip cache (R2 hit, or fetch origin + stream + store) |
-| `/downloads/` | Forwards Composer install notifications to Packagist |
-| `/search.json`, `/packages/list.json`, `/providers/*`, `/api/security-advisories/`, `/metadata/changes.json`, `/lists/all/summary.json` | Proxied Packagist APIs |
+| `https://<host>/` | Packagist.org (can be turned off in admin) |
+| `https://<host>/r/<slug>/` | A Composer registry you added in the UI |
+| `https://<host>/hosted` | VCS imports + uploaded packages |
 
-Zips are only fetched for allowlisted hosts (`api.github.com`, `codeload.github.com`, `github.com`, `gitlab.com`, `bitbucket.org`, `*.githubusercontent.com`). Unknown `/dist` hosts return 403. Unknown metadata `dist.url` hosts are left pointing at origin so custom CDNs still work.
+Existing lock files still have GitHub/GitLab zip URLs until you run `composer update --lock`.
 
-GitHub `api.github.com/.../zipball/<ref>` URLs are fetched from `codeload.github.com` so public archives do not burn the GitHub API rate limit.
+## Operators
+
+Admin UI: `https://<host>/admin`
+
+1. Create an R2 bucket and a D1 database (or keep the names in `wrangler.jsonc`).
+2. Apply migrations: `npx wrangler d1 migrations apply packagist-mirror --remote`
+3. `cp .dev.vars.example .dev.vars` and set `ADMIN_TOKEN` + `CONFIG_KEY` (long random strings).
+4. `npx wrangler secret put ADMIN_TOKEN` and `npx wrangler secret put CONFIG_KEY` for production.
+5. Optional: custom domain in `wrangler.jsonc` (`routes` + `custom_domain`).
+6. `npm run deploy`
+
+Paid Workers is required (CPU + streaming zip cache).
+
+Optional secrets: `GITHUB_TOKEN`, `GITLAB_TOKEN` for private VCS and rate limits.
 
 ## Develop
 
 ```bash
 npm install
 cp .dev.vars.example .dev.vars
+npx wrangler d1 migrations apply packagist-mirror --local
 npm test
 npm run dev
 ```
 
-Then, in another project:
+Admin: http://127.0.0.1:8787/admin
 
-```bash
-composer config repos.packagist composer http://127.0.0.1:8787
-composer update --lock
-```
+## How zips are cached
 
-## Deploy
-
-Production is `https://packages.shyim.de` (`packagist-mirror` Worker + R2 bucket, custom domain on `shyim.de`).
-
-```bash
-npm run deploy
-```
-
-Optional, for GitHub release assets that 404 without auth:
-
-```bash
-npx wrangler secret put GITHUB_TOKEN
-```
-
-## How zip caching works
-
-1. Composer asks for `/p2/vendor/package.json`.
-2. The Worker rewrites each allowlisted `dist.url` to `https://packages.shyim.de/dist/https/<host>/<path>`.
-3. Composer writes that URL into `composer.lock` and downloads it.
-4. The Worker looks up `dist/<sha256(originUrl)>` in R2.
-5. On a miss it fetches the origin zip, streams it to Composer, and `tee()`s the same stream into R2.
-
-R2 puts are atomic. If the client aborts mid-download, the next request fetches again.
+Allowlisted `dist.url`s are rewritten onto this host. The Worker serves `dist/<sha256>` from R2, or fetches origin, streams to the client, and stores the object. Uploaded packages live at `/dist/upload/<vendor>/<package>/<version>.zip`.

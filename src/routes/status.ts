@@ -6,6 +6,8 @@ export function handleStatus(request: Request): Response {
 		repository: repoUrl,
 		configure: `composer config -g repos.packagist composer ${repoUrl}`,
 		lockfile: "composer update --lock",
+		admin: `${repoUrl}/admin`,
+		hosted: `${repoUrl}/hosted`,
 	};
 
 	if (request.headers.get("accept")?.includes("application/json")) {
@@ -31,6 +33,7 @@ export function handleStatus(request: Request): Response {
   <pre><code>${escapeHtml(payload.configure)}</code></pre>
   <p>Existing lock files still contain GitHub zip URLs. Rewrite them without bumping versions:</p>
   <pre><code>${escapeHtml(payload.lockfile)}</code></pre>
+  <p>Admin UI: <a href="/admin/">/admin</a> · hosted packages: <code>/hosted</code></p>
 </body>
 </html>`;
 

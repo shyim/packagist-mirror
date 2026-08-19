@@ -2,21 +2,23 @@
 	"$schema": "./node_modules/wrangler/config-schema.json",
 	"name": "packagist-mirror",
 	"main": "src/index.ts",
-	"compatibility_date": "2026-08-17",
+	"compatibility_date": "2026-08-18",
 	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
 	"observability": {
 		"enabled": true,
 		"head_sampling_rate": 1,
 	},
-	"workers_dev": false,
-	"routes": [
-		{
-			"pattern": "packages.shyim.de",
-			"custom_domain": true,
-		},
-	],
+	"assets": {
+		"directory": "./admin",
+		"binding": "ASSETS",
+		"html_handling": "auto-trailing-slash",
+	},
 	"cache": {
 		"enabled": false,
+	},
+	"triggers": {
+		"crons": ["*/15 * * * *"],
 	},
 	"r2_buckets": [
 		{
@@ -25,10 +27,49 @@
 			"preview_bucket_name": "packagist-mirror-preview",
 		},
 	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "packagist-mirror",
+			"database_id": "2025f23d-26fe-4922-a687-902a50ff23c5",
+			"migrations_dir": "./migrations",
+		},
+	],
 	"vars": {
 		"UPSTREAM_REPO": "https://repo.packagist.org",
 		"UPSTREAM_API": "https://packagist.org",
-		"CONTACT_EMAIL": "s.sayakci@gmail.com",
+		"CONTACT_EMAIL": "",
 		"ALLOWED_DIST_HOSTS": "",
+	},
+	"env": {
+		"production": {
+			"workers_dev": false,
+			"routes": [
+				{
+					"pattern": "packages.shyim.de",
+					"custom_domain": true,
+				},
+			],
+			"r2_buckets": [
+				{
+					"binding": "BUCKET",
+					"bucket_name": "packagist-mirror",
+				},
+			],
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "packagist-mirror",
+					"database_id": "2025f23d-26fe-4922-a687-902a50ff23c5",
+					"migrations_dir": "./migrations",
+				},
+			],
+			"vars": {
+				"UPSTREAM_REPO": "https://repo.packagist.org",
+				"UPSTREAM_API": "https://packagist.org",
+				"CONTACT_EMAIL": "s.sayakci@gmail.com",
+				"ALLOWED_DIST_HOSTS": "",
+			},
+		},
 	},
 }
