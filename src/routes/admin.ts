@@ -1,4 +1,5 @@
-import { adminCookie, isAdminAuthorized, json, unauthorized } from "../auth";
+import { json, unauthorized } from "../auth";
+import { createAuth, userCount } from "../auth/server";
 import { encryptSecret } from "../crypto";
 import { extraDistHosts, getPackage, getSetting, listPackages, listRemotes, listVersions, setSetting } from "../db";
 import { parseVcsUrl, importVcsPackage } from "../vcs";
@@ -12,46 +13,44 @@ export async function handleAdmin(
 	const url = new URL(request.url);
 	const path = url.pathname;
 
-	if (path === "/admin" || path === "/admin/") {
-		return env.ASSETS.fetch(new Request(new URL("/index.html", url.origin), request));
-	}
-	if (path.startsWith("/admin/") && !path.startsWith("/admin/api/")) {
-		return env.ASSETS.fetch(new Request(new URL(path.slice("/admin".length), url.origin), request));
+	if (path === "/admin" || path === "/admin/" || (path.startsWith("/admin/") && !path.startsWith("/admin/api/"))) {
+		return serveAdminAsset(request, env, url);
 	}
 
-	if (path === "/admin/api/login" && request.method === "POST") {
-		const body = (await request.json()) as { token?: string };
-		const token = body.token?.trim() ?? "";
-		if (!env.ADMIN_TOKEN || token !== env.ADMIN_TOKEN) {
-			return unauthorized();
+	if (path.startsWith("/admin/api/auth")) {
+		return createAuth(env, request).handler(request);
+	}
+
+	if (path === "/admin/api/setup" && request.method === "GET") {
+		return json({ needed: (await userCount(env.DB)) === 0 });
+	}
+
+	if (path === "/admin/api/setup" && request.method === "POST") {
+		if ((await userCount(env.DB)) > 0) {
+			return json({ status: "error", message: "Setup already completed" }, 409);
 		}
-		return new Response(JSON.stringify({ ok: true }), {
-			headers: {
-				"content-type": "application/json; charset=utf-8",
-				"set-cookie": adminCookie(request, token, 2592000),
-			},
+		const body = (await request.json()) as { name?: string; email?: string; password?: string };
+		if (!body.email || !body.password || !body.name) {
+			return json({ status: "error", message: "name, email, and password are required" }, 400);
+		}
+		if (body.password.length < 8) {
+			return json({ status: "error", message: "Password must be at least 8 characters" }, 400);
+		}
+		const auth = createAuth(env, request, true);
+		const result = await auth.api.signUpEmail({
+			body: { name: body.name, email: body.email, password: body.password },
+			headers: request.headers,
+			asResponse: true,
 		});
+		await env.DB.prepare('UPDATE "user" SET role = ? WHERE email = ?').bind("admin", body.email).run();
+		return result;
 	}
 
-	if (!isAdminAuthorized(request, env)) {
-		if (path === "/admin/api/session") {
-			return json({ authenticated: false });
-		}
+	const session = await createAuth(env, request).api.getSession({ headers: request.headers });
+	if (!session?.user) {
 		return unauthorized();
 	}
-
-	if (path === "/admin/api/logout" && request.method === "POST") {
-		return new Response(JSON.stringify({ ok: true }), {
-			headers: {
-				"content-type": "application/json; charset=utf-8",
-				"set-cookie": adminCookie(request, "", 0),
-			},
-		});
-	}
-
-	if (path === "/admin/api/session") {
-		return json({ authenticated: true });
-	}
+	const role = (session.user as { role?: string }).role ?? "user";
 
 	if (path === "/admin/api/settings" && request.method === "GET") {
 		return json({
@@ -234,7 +233,54 @@ export async function handleAdmin(
 		return json({ ok: true });
 	}
 
+	if (path === "/admin/api/users" && request.method === "GET") {
+		if (role !== "admin") {
+			return json({ status: "error", message: "Admin only" }, 403);
+		}
+		const rows = await env.DB.prepare('SELECT id, name, email, role FROM "user" ORDER BY email').all<{
+			id: string;
+			name: string;
+			email: string;
+			role: string | null;
+		}>();
+		return json({ users: rows.results ?? [] });
+	}
+
+	if (path === "/admin/api/users" && request.method === "POST") {
+		if (role !== "admin") {
+			return json({ status: "error", message: "Admin only" }, 403);
+		}
+		const body = (await request.json()) as { name?: string; email?: string; password?: string; role?: string };
+		if (!body.name || !body.email || !body.password) {
+			return json({ status: "error", message: "name, email, and password are required" }, 400);
+		}
+		const auth = createAuth(env, request, true);
+		const created = await auth.api.createUser({
+			body: {
+				name: body.name,
+				email: body.email,
+				password: body.password,
+				role: body.role === "admin" ? "admin" : "user",
+			},
+			headers: request.headers,
+		});
+		if (!created?.user) {
+			return json({ status: "error", message: "Could not create user" }, 400);
+		}
+		return json({ ok: true, user: created.user });
+	}
+
 	return json({ status: "error", message: "Not found" }, 404);
+}
+
+async function serveAdminAsset(request: Request, env: Env, url: URL): Promise<Response> {
+	const assetPath = url.pathname.replace(/^\/admin/, "") || "/";
+	const assetRequest = new Request(new URL(assetPath, url.origin), request);
+	const asset = await env.ASSETS.fetch(assetRequest);
+	if (asset.status !== 404 || !request.headers.get("accept")?.includes("text/html")) {
+		return asset;
+	}
+	return env.ASSETS.fetch(new Request(new URL("/index.html", url.origin), request));
 }
 
 async function handleUpload(request: Request, env: Env): Promise<Response> {

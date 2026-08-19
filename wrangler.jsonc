@@ -10,7 +10,7 @@
 		"head_sampling_rate": 1,
 	},
 	"assets": {
-		"directory": "./admin",
+		"directory": "./admin/dist",
 		"binding": "ASSETS",
 		"html_handling": "auto-trailing-slash",
 	},

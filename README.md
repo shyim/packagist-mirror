@@ -23,10 +23,12 @@ Existing lock files still have GitHub/GitLab zip URLs until you run `composer up
 
 Admin UI: `https://<host>/admin`
 
+On first visit, a setup wizard creates the first admin user (email + password). There is no public signup. Extra users are created by an admin on the Users page.
+
 1. Create an R2 bucket and a D1 database (or keep the names in `wrangler.jsonc`).
 2. Apply migrations: `npx wrangler d1 migrations apply packagist-mirror --remote`
-3. `cp .dev.vars.example .dev.vars` and set `ADMIN_TOKEN` + `CONFIG_KEY` (long random strings).
-4. `npx wrangler secret put ADMIN_TOKEN` and `npx wrangler secret put CONFIG_KEY` for production.
+3. `cp .dev.vars.example .dev.vars` and set `CONFIG_KEY` (long random string).
+4. `npx wrangler secret put CONFIG_KEY` for production (encrypts remote/VCS tokens and signs sessions).
 5. Optional: custom domain in `wrangler.jsonc` (`routes` + `custom_domain`).
 6. `npm run deploy`
 

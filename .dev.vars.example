@@ -1,7 +1,4 @@
-# Required for /admin
-ADMIN_TOKEN=change-me
-
-# Used to encrypt remote/VCS tokens stored in D1 (any long random string)
+# Required. Encrypts remote/VCS tokens and signs admin sessions.
 CONFIG_KEY=change-me-to-a-long-random-string
 
 # Optional. Public GitHub zipballs use codeload and do not need this.

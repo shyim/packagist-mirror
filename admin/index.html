@@ -1,82 +1,12 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Packagist mirror</title>
-  <link rel="stylesheet" href="./styles.css">
-</head>
-<body>
-  <header>
-    <h1>Packagist mirror</h1>
-    <button id="logout" hidden>Log out</button>
-  </header>
-
-  <section id="login">
-    <h2>Admin login</h2>
-    <form id="login-form">
-      <label>Admin token <input name="token" type="password" autocomplete="current-password" required></label>
-      <button type="submit">Sign in</button>
-    </form>
-    <p class="hint">Set <code>ADMIN_TOKEN</code> with <code>wrangler secret put ADMIN_TOKEN</code>.</p>
-  </section>
-
-  <main id="app" hidden>
-    <section>
-      <h2>Settings</h2>
-      <form id="settings-form">
-        <label class="row"><input type="checkbox" name="packagist_enabled"> Mirror packagist.org at <code>/</code></label>
-        <label>Contact email <input name="contact_email" type="email" placeholder="ops@example.com"></label>
-        <button type="submit">Save settings</button>
-      </form>
-    </section>
-
-    <section>
-      <h2>Composer remotes</h2>
-      <p class="hint">Each remote is available at <code>/r/&lt;slug&gt;</code>.</p>
-      <form id="remote-form">
-        <label>Slug <input name="slug" required pattern="[a-z0-9][a-z0-9-]*" placeholder="drupal"></label>
-        <label>Repository URL <input name="url" required placeholder="https://packages.drupal.org/8"></label>
-        <label>Auth
-          <select name="auth_type">
-            <option value="none">None</option>
-            <option value="bearer">Bearer token</option>
-            <option value="basic">HTTP basic</option>
-          </select>
-        </label>
-        <label>Token / password <input name="token" type="password"></label>
-        <label>Username <input name="username" placeholder="for basic auth"></label>
-        <label>Extra dist hosts <input name="dist_hosts" placeholder="ftp.drupal.org, example.com"></label>
-        <button type="submit">Add remote</button>
-      </form>
-      <table>
-        <thead><tr><th>Slug</th><th>URL</th><th>Auth</th><th>Error</th><th></th></tr></thead>
-        <tbody id="remotes"></tbody>
-      </table>
-    </section>
-
-    <section>
-      <h2>Hosted packages</h2>
-      <p class="hint">Served at <code>/hosted</code>. Link a GitHub/GitLab repo or upload a zip.</p>
-      <form id="vcs-form">
-        <label>VCS URL <input name="url" required placeholder="https://github.com/acme/lib"></label>
-        <label>Token (optional) <input name="token" type="password"></label>
-        <button type="submit">Import VCS</button>
-      </form>
-      <form id="upload-form">
-        <label>Zip <input name="file" type="file" accept=".zip" required></label>
-        <label>Name override <input name="name" placeholder="vendor/package"></label>
-        <label>Version override <input name="version" placeholder="1.0.0"></label>
-        <button type="submit">Upload zip</button>
-      </form>
-      <table>
-        <thead><tr><th>Package</th><th>Source</th><th>Versions</th><th>Last error</th><th></th></tr></thead>
-        <tbody id="packages"></tbody>
-      </table>
-    </section>
-  </main>
-
-  <p id="flash" hidden></p>
-  <script src="./app.js"></script>
-</body>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Packagist mirror</title>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module" src="/src/main.tsx"></script>
+	</body>
 </html>

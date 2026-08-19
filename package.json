@@ -3,9 +3,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev",
-		"deploy": "wrangler deploy",
-		"deploy:production": "wrangler deploy --env production",
+		"build:admin": "vite build --config admin/vite.config.ts",
+		"dev": "npm run build:admin && wrangler dev",
+		"deploy": "npm run build:admin && wrangler deploy",
+		"deploy:production": "npm run build:admin && wrangler deploy --env production",
 		"cf-typegen": "wrangler types",
 		"test": "vitest run",
 		"test:watch": "vitest",
@@ -15,12 +16,24 @@
 		"@cloudflare/vitest-pool-workers": "^0.21.3",
 		"@cloudflare/workers-types": "^5.20260817.1",
 		"@types/node": "^26.2.0",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.4",
+		"@vitejs/plugin-react": "^6.0.5",
 		"typescript": "^7.0.2",
+		"vite": "^8.2.1",
 		"vitest": "^4.1.10",
 		"wrangler": "^4.123.0"
 	},
 	"allowScripts": {
 		"esbuild@0.28.1": true,
 		"workerd@1.20260811.1": true
+	},
+	"dependencies": {
+		"@cloudflare/kumo": "^2.11.0",
+		"@phosphor-icons/react": "^2.1.10",
+		"better-auth": "^1.7.1",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"react-router-dom": "^7.18.2"
 	}
 }

@@ -2,6 +2,35 @@ import { exports } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
 
 describe("admin auth", () => {
+	it("reports setup is needed on a fresh database", async () => {
+		const response = await exports.default.fetch("https://mirror.test/admin/api/setup");
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({ needed: true });
+	});
+
+	it("creates the first admin and rejects a second setup", async () => {
+		const first = await exports.default.fetch("https://mirror.test/admin/api/setup", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				name: "Admin",
+				email: "admin@example.com",
+				password: "password12",
+			}),
+		});
+		expect(first.status).toBeLessThan(400);
+		const second = await exports.default.fetch("https://mirror.test/admin/api/setup", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				name: "Other",
+				email: "other@example.com",
+				password: "password12",
+			}),
+		});
+		expect(second.status).toBe(409);
+	});
+
 	it("rejects unauthenticated admin API", async () => {
 		const response = await exports.default.fetch("https://mirror.test/admin/api/remotes");
 		expect(response.status).toBe(401);
